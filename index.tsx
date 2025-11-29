@@ -585,6 +585,12 @@ const computeNearbySuggestionsFromCoords = (data: LocationInfo[]) => {
 // Recompute nearbySuggestion based on coordinates for better accuracy on map-based routing
 computeNearbySuggestionsFromCoords(ilocosNorteData);
 
+// Helper to parse a 'nearbySuggestion' string like 'Paoay or Currimao' into parts
+const parseNearbySuggestion = (s?: string) => {
+    if (!s) return [] as string[];
+    return s.split(/,| or | and /i).map(x => x.trim()).filter(Boolean);
+};
+
 // Build a simple adjacency list for towns: each town connects to its K nearest neighbors.
 const buildAdjacency = (data: LocationInfo[], k = 4) => {
     const adj: { to: number; cost: number }[][] = new Array(data.length).fill(0).map(() => []);
@@ -722,6 +728,106 @@ const App = () => {
         return `https://www.google.com/maps/search/?api=1&query=${encodedQuery}`;
     };
 
+        // Helper: parse route towns from the bot's route message text, which has lines like `**1. Town Name**`.
+        const parseRouteFromBotMessage = (text: string) => {
+            const townNames: string[] = [];
+            const regex = /\*\*\s*\d+\.\s*([^*]+)\*\*/g;
+            let match: RegExpExecArray | null;
+            while ((match = regex.exec(text)) !== null) {
+                const name = match[1].trim();
+                townNames.push(name);
+            }
+            return townNames;
+        };
+
+        // Helper: convert number words to digits (e.g., 'three' -> 3)
+        const numberWordsMap: { [key: string]: number } = {
+            'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5,
+            'six': 6, 'seven': 7, 'eight': 8, 'nine': 9, 'ten': 10,
+            'eleven': 11, 'twelve': 12, 'thirteen': 13, 'fourteen': 14, 'fifteen': 15,
+            'sixteen': 16, 'seventeen': 17, 'eighteen': 18, 'nineteen': 19, 'twenty': 20,
+            'twenty one': 21, 'twenty-one': 21,
+            'twenty two': 22, 'twenty-two': 22,
+            'twenty three': 23, 'twenty-three': 23,
+            'twenty four': 24, 'twenty-four': 24,
+            'twenty five': 25, 'twenty-five': 25,
+            'thirty': 30
+        };
+
+        const parseNumber = (val: string|undefined): number | null => {
+            if (!val) return null;
+            const trim = val.toLowerCase().trim();
+            if (/^\d+$/.test(trim)) return parseInt(trim, 10);
+            // support '3-day' or '3 day'
+            const digitMatch = trim.match(/(\d{1,2})/);
+            if (digitMatch) return parseInt(digitMatch[1], 10);
+            // check word forms
+            if (numberWordsMap[trim] !== undefined) return numberWordsMap[trim];
+            // Try to normalize spaces and hyphens
+            const normalized = trim.replace(/\s+/g, ' ').replace(/-/g, ' ');
+            if (numberWordsMap[normalized] !== undefined) return numberWordsMap[normalized];
+            return null;
+        };
+
+        // Helper: estimate cost for a chain of LocationInfo
+        const estimateCostForChain = (chain: LocationInfo[], days?: number, wantsAccommodationOnly = false) => {
+            const avgAccommodation = (acc: { price?: string }[]) => {
+                if (!acc || acc.length === 0) return 2000;
+                const prices: number[] = acc.map(a => {
+                    if (!a.price) return 2000;
+                    const nums = (a.price.match(/\d[\d,]*/g) || []).map(s => parseInt(s.replace(/,/g, ''), 10));
+                    if (nums.length === 0) return 2000;
+                    return Math.round(nums.reduce((s, n) => s + n, 0) / nums.length);
+                });
+                return Math.round(prices.reduce((s, n) => s + n, 0) / prices.length);
+            };
+
+            // If days is not specified by the user, assume only a 1-day trip by default
+            const nDays = days ?? 1;
+            // If user specifically asked for accommodation estimates, treat nights differently.
+            // Also, if days **were not provided** (i.e., undefined), do NOT include accommodation in totals by default.
+            let nightsForAccommodation: number;
+            if (typeof days !== 'number') {
+                // No days specified -> assume 1 day for food/transport but 0 nights for accommodation
+                nightsForAccommodation = 0;
+            } else if (wantsAccommodationOnly) {
+                nightsForAccommodation = Math.max(0, days - 1);
+            } else {
+                nightsForAccommodation = days;
+            }
+            const accPerNight = Math.max(1000, Math.round(chain.reduce((sum, l) => sum + avgAccommodation(l.accommodations || []), 0) / chain.length));
+            const accommodationTotal = accPerNight * nightsForAccommodation;
+            const foodPerDay = 600;
+            const foodTotal = foodPerDay * nDays;
+            // Calculate transport: estimate per-km cost across the chain
+            let totalKm = 0;
+            for (let i = 0; i < chain.length - 1; i++) {
+                const a = chain[i].coords;
+                const b = chain[i+1].coords;
+                if (a && b) totalKm += haversineDistance(a.lat, a.lon, b.lat, b.lon);
+            }
+            const perKmTransportRate = 15; // PHP per km estimate
+            const transportTotal = Math.max(400, Math.round(totalKm * perKmTransportRate));
+            const misc = Math.round(0.1 * (accommodationTotal + foodTotal + transportTotal));
+            const grandTotal = accommodationTotal + foodTotal + transportTotal + misc;
+            let breakdown = '';
+            if (typeof days === 'number') {
+                breakdown += `Estimated cost for a **${nDays}-day** trip for this route:\n\n`;
+            } else {
+                breakdown += `Estimated cost for this route (totals below):\n\n`;
+            }
+            if (nightsForAccommodation > 0) {
+                breakdown += `- Accommodation (avg ₱${accPerNight.toLocaleString()} / night): ₱${accommodationTotal.toLocaleString()}\n`;
+            } else if (wantsAccommodationOnly) {
+                breakdown += `- Accommodation (avg ₱${accPerNight.toLocaleString()} / night): (not included in totals as no days were specified)\n`;
+            }
+            breakdown += `- Food (avg ₱${foodPerDay} / day): ₱${foodTotal.toLocaleString()}\n` +
+                `- Transport (estimate based on travel distance): ₱${transportTotal.toLocaleString()}\n` +
+                `- Misc / Buffer (10%): ₱${misc.toLocaleString()}\n\n` +
+                `**Estimated total:** ₱${grandTotal.toLocaleString()} (approximate)`;
+            return breakdown;
+        };
+
     // Generate a simple itinerary for N days in a given place using the local data
     const generateItinerary = (days: number, placeQuery: string) => {
         const placeLower = placeQuery.toLowerCase().trim();
@@ -812,7 +918,9 @@ const App = () => {
         // If not, keep the stay in the requested town but recommend day trips to a nearby town for the extra days.
         const spots = location.touristSpots || [];
         const stays = location.accommodations || [];
-        const nearbyLoc = location.nearbySuggestion ? findLocation(location.nearbySuggestion.toLowerCase()) : null;
+        // Move parseNearbySuggestion and reuse across functions
+        const nearbyLocNames = parseNearbySuggestion(location.nearbySuggestion);
+        const nearbyLoc = nearbyLocNames.length > 0 ? findLocation(nearbyLocNames[0].toLowerCase()) : null;
 
         // Week-overview for long trips (more than 14 days) — keep base in requested town and use a single selected accommodation for the whole trip
         if (days > 14) {
@@ -873,8 +981,8 @@ const App = () => {
         }
 
         // If the town does NOT have enough spots for the requested days:
-        // - Fill days with the town's spots first
-        // - For remaining days, recommend day trips to the nearby town(s) but keep the accommodation in the requested town
+        // - Build a route of nearby towns (by straight-line distance) to cover the remaining days
+        // - Fill days with the combination of the requested town's spots and nearby towns.
         textLines.push(`Here is a suggested **${days}-day itinerary** based in **${location.name}**. You will stay in ${location.name} for the entire trip.`);
 
         // Days covered inside the town — choose a single selected stay for the base town
@@ -896,44 +1004,52 @@ const App = () => {
             textLines.push(`- Evening: Relax and enjoy local culture or sunset views.`);
         }
 
-        // Remaining days: recommend day trips to nearby town(s)
+        // Remaining days: recommend day trips to nearby town(s), using nearest neighbors by coordinates as fallback
         let dayCounter = Math.min(spots.length, days);
         const remaining = days - dayCounter;
 
         if (remaining > 0) {
-            if (nearbyLoc && (nearbyLoc.touristSpots || []).length > 0) {
-                for (let r = 1; r <= remaining; r++) {
-                    dayCounter++;
-                    const spot = nearbyLoc.touristSpots[(offset + r - 1) % nearbyLoc.touristSpots.length];
-                    const food = nearbyLoc.food && nearbyLoc.food.length > 0 ? nearbyLoc.food[(offset + r - 1) % nearbyLoc.food.length] : undefined;
+            // Build a list of nearest towns by haversine distance (excluding the base town) and excluding duplicates
+            const nearestTowns = ilocosNorteData
+                .filter(l => l.name !== location.name && l.coords)
+                .map(l => ({ loc: l, dist: haversineDistance(location.coords!.lat, location.coords!.lon, l.coords!.lat, l.coords!.lon) }))
+                .sort((a, b) => a.dist - b.dist)
+                .map(x => x.loc);
 
-                    textLines.push(`\n**Day ${dayCounter}: ${nearbyLoc.name} (Day trip from ${location.name})**`);
-                    if (spot) {
-                        textLines.push(`- Visit **${spot.name}** — ${spot.description} ([map](${generateMapLink(spot.name + ' ' + nearbyLoc.name)}))`);
-                    } else {
-                        textLines.push(`- Explore main sights in ${nearbyLoc.name}.`);
-                    }
-                    if (food) {
-                        textLines.push(`- Lunch/Dinner: Try **${food.name}** — ${food.description}` + (food.googleMapsLink ? ` ([map](${food.googleMapsLink}))` : ''));
-                    }
-                    if (selectedStayForBase) {
-                        textLines.push(`- Return to ${location.name} for the night and stay at **${selectedStayForBase.name}**.`);
-                    } else {
-                        textLines.push(`- Return to ${location.name} for the night.`);
-                    }
-                    textLines.push(`- Note: Travel time may vary; plan for transport back to ${location.name} in the evening.`);
-                }
-            } else {
-                // No nearby town with activities found — recommend a nearbySuggestion name or other towns
-                const suggestionName = location.nearbySuggestion;
-                for (let r = 1; r <= remaining; r++) {
-                    dayCounter++;
+            let neighborIdx = 0;
+            for (let r = 1; r <= remaining; r++) {
+                dayCounter++;
+                // Select next nearby town; cycle through nearest list if more days than entries
+                const candidate = nearestTowns[neighborIdx % nearestTowns.length];
+                neighborIdx++;
+
+                if (!candidate) {
                     textLines.push(`\n**Day ${dayCounter}: ${location.name} (Flexible day)**`);
-                    textLines.push(`- ${location.name} has limited major attractions for a full day. Consider a day-trip to **${suggestionName || 'a nearby town with more activities'}**, or use this day to relax, try local food, or take a longer exploration of the surroundings.`);
+                    textLines.push(`- ${location.name} has limited major attractions for a full day. Consider a day-trip to another town, or use this day to relax, try local food, or take a longer exploration of the surroundings.`);
                     if (stays.length > 0) {
                         textLines.push(`- Stay (base in ${location.name}): **${stays[0].name}** — ${stays[0].price ?? stays[0].description}` + (stays[0].googleMapsLink ? ` ([map](${stays[0].googleMapsLink}))` : ''));
                     }
+                    continue;
                 }
+
+                const spot = candidate.touristSpots && candidate.touristSpots.length > 0 ? candidate.touristSpots[(offset + r - 1) % candidate.touristSpots.length] : undefined;
+                const food = candidate.food && candidate.food.length > 0 ? candidate.food[(offset + r - 1) % candidate.food.length] : undefined;
+
+                textLines.push(`\n**Day ${dayCounter}: ${candidate.name} (Day trip from ${location.name})**`);
+                if (spot) {
+                    textLines.push(`- Visit **${spot.name}** — ${spot.description} ([map](${generateMapLink(spot.name + ' ' + candidate.name)}))`);
+                } else {
+                    textLines.push(`- Explore main sights in ${candidate.name}.`);
+                }
+                if (food) {
+                    textLines.push(`- Lunch/Dinner: Try **${food.name}** — ${food.description}` + (food.googleMapsLink ? ` ([map](${food.googleMapsLink}))` : ''));
+                }
+                if (selectedStayForBase) {
+                    textLines.push(`- Return to ${location.name} for the night and stay at **${selectedStayForBase.name}**.`);
+                } else {
+                    textLines.push(`- Return to ${location.name} for the night.`);
+                }
+                textLines.push(`- Note: Travel time may vary; plan for transport back to ${location.name} in the evening.`);
             }
         }
 
@@ -955,21 +1071,43 @@ const App = () => {
         return loc;
     };
 
-    // Itinerary request handler: "give me an itinerary for X days in Y"
-    const itineraryRegex = /(?:give me an |create an |make an |)?itinerary(?: for)?\s*(?:about\s*)?(\d{1,2})\s*days?\s*(?:in|for)\s*([a-zA-Z0-9\s'\-]+)/i;
+    // Itinerary request handler: "give me an itinerary for X days in Y" or "create a X-day trip in Y"
+    // Accept digits or number words for day counts (e.g., 'three')
+    // Accept digits or number words for day counts (including hyphenated forms). Accept 'create a', 'make a', 'give me a'.
+    const itineraryRegex = /(?:give me an |give me a |create an |create a |make an |make a |)?itinerary(?: for)?\s*(?:about\s*)?(\d{1,2}|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|twenty[- ]?one|twenty[- ]?two|twenty[- ]?three|twenty[- ]?four|twenty[- ]?five)\s*[- ]?days?\s*(?:in|for)\s*([a-zA-Z0-9\s'\-]+)/i;
     const itMatch = userInput.match(itineraryRegex);
     if (itMatch) {
-        const days = parseInt(itMatch[1], 10) || 1;
+        const parsedDays = parseNumber(itMatch[1]) || 1;
+        const days = parsedDays;
         const place = itMatch[2].trim();
         return generateItinerary(days, place);
     }
 
     // Also match patterns like "give me a 3 day itinerary for ilocos norte" (number before 'itinerary')
-    const itineraryRegex2 = /(?:give me|create|make)(?: me| an)?\s*(\d{1,2})\s*days?\s*(?:day)?\s*itinerary\s*(?:for|in)\s*([a-zA-Z0-9\s'\-]+)/i;
+    const itineraryRegex2 = /(?:give me|create|make)(?: me| an| a)?\s*(\d{1,2}|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|twenty[- ]?one|twenty[- ]?two|twenty[- ]?three|twenty[- ]?four|twenty[- ]?five)\s*[- ]?days?\s*(?:day)?\s*itinerary\s*(?:for|in)\s*([a-zA-Z0-9\s'\-]+)/i;
     const itMatch2 = userInput.match(itineraryRegex2);
     if (itMatch2) {
-        const days = parseInt(itMatch2[1], 10) || 1;
+        const days = parseNumber(itMatch2[1]) || 1;
         const place = itMatch2[2].trim();
+        return generateItinerary(days, place);
+    }
+
+    // Support phrasing: "create a 3 day trip in Laoag" or "create 3-day trip for Laoag"
+    // Trip regex: matches 'create a 3-day trip in Laoag' and 'create 3-day trip for Laoag' and 'give me 3 day trip to Pagudpud'
+    const tripRegex1 = /(?:give me|create|make)(?: me| an| a)?\s*(\d{1,2}|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|twenty[- ]?one|twenty[- ]?two|twenty[- ]?three|twenty[- ]?four|twenty[- ]?five)\s*[- ]?day[s]?\s*(?:trip|tour)\s*(?:for|in|to)\s*([a-zA-Z0-9\s'\-]+)/i;
+    const tripMatch1 = userInput.match(tripRegex1);
+    if (tripMatch1) {
+        const days = parseNumber(tripMatch1[1]) || 1;
+        const place = tripMatch1[2].trim();
+        return generateItinerary(days, place);
+    }
+
+    // Support phrasing: "create a trip in Laoag for 3 days"
+    const tripRegex2 = /(?:give me|create|make)(?: me| an| a)?\s*(?:trip|tour)\s*(?:in|for)\s*([a-zA-Z0-9\s'\-]+?)\s*(?:for|with)?\s*(\d{1,2}|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|twenty[- ]?one|twenty[- ]?two|twenty[- ]?three|twenty[- ]?four|twenty[- ]?five)\s*(?:days?|day)/i;
+    const tripMatch2 = userInput.match(tripRegex2);
+    if (tripMatch2) {
+        const place = tripMatch2[1].trim();
+        const days = parseNumber(tripMatch2[2]) || 1;
         return generateItinerary(days, place);
     }
 
@@ -993,7 +1131,7 @@ const App = () => {
     }
 
     // Cost estimation handler: if user asks about cost after an itinerary, provide a breakdown
-    const costKeywords = /\b(cost|how much|estimate|price|expense|budget|how much will)\b/;
+    const costKeywords = /\b(cost|how much|estimate|price|expense|budget|how much will|spend|spending)\b/;
     if (costKeywords.test(lowerInput)) {
         // Try to find the most recent itinerary-related user request in the conversation
         let requestDays: number | null = null;
@@ -1073,12 +1211,37 @@ const App = () => {
             }
         }
 
+            // Determine if the user is specifically asking about accommodation costs
+            const wantsAccommodationCost = /\b(accommodation|accommodations|hotel|stay|lodging|night|per night)\b/.test(lowerInput);
+
+            // Additionally: if still no requestDays or place, look for a route-style bot message and parse its town chain.
+            if (!requestDays || !requestPlace) {
+                for (let i = messages.length - 1; i >= 0; i--) {
+                    const msg = messages[i];
+                    if (msg.author === Author.BOT && /Here are places you can visit on a route from/i.test(msg.text)) {
+                        const townNames = parseRouteFromBotMessage(msg.text);
+                        if (townNames.length > 0) {
+                            const chain: LocationInfo[] = townNames.map(n => findLocation(n)).filter(Boolean) as LocationInfo[];
+                        if (chain.length > 0) {
+                            // If the user didn't explicitly ask for days, don't include day-based accommodation by default.
+                            // Only pass a day number if the user provided a days value in their query.
+                            if (requestDays) {
+                                return estimateCostForChain(chain, requestDays, wantsAccommodationCost);
+                            } else {
+                                return estimateCostForChain(chain, undefined, wantsAccommodationCost);
+                            }
+                            }
+                        }
+                    }
+                }
+            }
+
         if (!requestDays || !requestPlace) {
             return "I can estimate costs for an itinerary. Which itinerary are you referring to? Tell me the number of days (or weeks/months) and the city/municipality in Ilocos Norte.";
         }
 
         // Estimate costs based on local data
-        const estimateItineraryCost = (days: number, placeQuery: string) => {
+        const estimateItineraryCost = (days: number, placeQuery: string, wantsAccommodationOnly = false) => {
             const q = placeQuery.toLowerCase().trim();
             const findLocation = (qq: string) => ilocosNorteData.find(l => l.name.toLowerCase() === qq) || ilocosNorteData.find(l => l.keywords.some(k => k === qq)) || ilocosNorteData.find(l => l.name.toLowerCase().includes(qq) || qq.includes(l.name.toLowerCase()));
 
@@ -1098,14 +1261,16 @@ const App = () => {
             // Build chain similar to generateItinerary for multi-day trips
             const startLoc = location || ilocosNorteData[0];
             const chain: LocationInfo[] = [startLoc];
-            let next = startLoc.nearbySuggestion;
+            let nextCandidates = startLoc.nearbySuggestion ? parseNearbySuggestion(startLoc.nearbySuggestion) : [];
+            let next = nextCandidates.length > 0 ? nextCandidates.shift() : null;
             const used = new Set<string>([startLoc.name]);
             while (chain.length < days && next) {
                 const nl = findLocation(next.toLowerCase());
                 if (!nl || used.has(nl.name)) break;
                 chain.push(nl);
                 used.add(nl.name);
-                next = nl.nearbySuggestion || null;
+                nextCandidates = nl.nearbySuggestion ? parseNearbySuggestion(nl.nearbySuggestion) : [];
+                next = nextCandidates.length > 0 ? nextCandidates.shift() : null;
             }
             if (chain.length < days) {
                 const others = ilocosNorteData.filter(l => !used.has(l.name) && l.touristSpots && l.touristSpots.length > 0);
@@ -1120,32 +1285,50 @@ const App = () => {
                 }
             }
 
-            // Accommodation cost: average per-night across the chain
+            // Compute nights depending on whether user specifically asked for accommodation and provided days
+            // For itinerary-based estimates: if no days were specified, assume 1 day for food/transport but 0 nights for accommodation
+            let nights = typeof days === 'number' ? days : 0;
+            if (wantsAccommodationOnly) {
+                nights = typeof days === 'number' ? Math.max(0, days - 1) : 0; // day-1 nights when user explicitly asked for accommodation
+            }
+            // Accommodation cost: average per-night across the chain (apply nights as needed)
             const accPerNight = Math.max(1000, Math.round(chain.reduce((sum, l) => sum + avgAccommodation(l.accommodations || []), 0) / chain.length));
-            const accommodationTotal = accPerNight * days;
+            const accommodationTotal = accPerNight * nights;
 
             // Food estimate: average 600 PHP per day
             const foodPerDay = 600;
             const foodTotal = foodPerDay * days;
 
-            // Transport estimate: average 400 PHP per day (inter-city/local transport)
-            const transportPerDay = 400;
-            const transportTotal = transportPerDay * days;
+            // Transport estimate: estimate based on total km across the chain
+            let totalKm = 0;
+            for (let i = 0; i < chain.length - 1; i++) {
+                const a = chain[i].coords;
+                const b = chain[i+1].coords;
+                if (a && b) totalKm += haversineDistance(a.lat, a.lon, b.lat, b.lon);
+            }
+            const perKmTransportRate = 15;
+            const transportTotal = Math.max(400, Math.round(totalKm * perKmTransportRate));
 
             const misc = Math.round(0.1 * (accommodationTotal + foodTotal + transportTotal));
             const grandTotal = accommodationTotal + foodTotal + transportTotal + misc;
 
-            const breakdown = `Estimated cost for a **${days}-day** trip in **${placeQuery}**:\n\n` +
-                `- Accommodation (avg ₱${accPerNight.toLocaleString()} / night): ₱${accommodationTotal.toLocaleString()}\n` +
-                `- Food (avg ₱${foodPerDay} / day): ₱${foodTotal.toLocaleString()}\n` +
-                `- Transport (avg ₱${transportPerDay} / day): ₱${transportTotal.toLocaleString()}\n` +
+            // Build breakdown depending on whether accommodation is included
+            let breakdown = `Estimated cost for a **${days}-day** trip in **${placeQuery}**:\n\n`;
+            if (nights > 0) {
+                breakdown += `- Accommodation (avg ₱${accPerNight.toLocaleString()} / night): ₱${accommodationTotal.toLocaleString()}\n`;
+            } else if (wantsAccommodationOnly) {
+                // User only asked about accommodation and didn't specify days: show per-night rate but not include it in totals
+                breakdown += `- Accommodation (avg ₱${accPerNight.toLocaleString()} / night): (not included in totals as no days were specified)\n`;
+            }
+            breakdown += `- Food (avg ₱${foodPerDay} / day): ₱${foodTotal.toLocaleString()}\n` +
+                `- Transport (estimate based on travel distance): ₱${transportTotal.toLocaleString()}\n` +
                 `- Misc / Buffer (10%): ₱${misc.toLocaleString()}\n\n` +
                 `**Estimated total:** ₱${grandTotal.toLocaleString()} (approximate)`;
 
             return breakdown;
         };
 
-        return estimateItineraryCost(requestDays, requestPlace);
+        return estimateItineraryCost(requestDays, requestPlace, wantsAccommodationCost);
     }
 
     // 1. Handle greetings
