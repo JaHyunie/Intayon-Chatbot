@@ -1,0 +1,7 @@
+{
+  "description": "A chatbot to help tourists explore Ilocos Norte, providing recommendations, information on destinations and showing locations on a map.",
+  "requestFramePermissions": [
+    "geolocation"
+  ],
+  "name": "App"
+}
