@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import ReactDOM from 'react-dom/client';
 import { marked } from 'marked';
@@ -26,7 +25,7 @@ interface Message {
 interface Detail {
     name: string;
     description: string;
-    googleMapsLink?: string; // Kept for food items that are specific places
+    googleMapsLink?: string; 
 }
 
 interface Accommodation extends Detail {
@@ -42,6 +41,7 @@ interface LocationInfo {
     accommodations: Accommodation[];
     souvenirs: Detail[];
     nearbySuggestion?: string | null;
+    coords?: { lat: number; lon: number };
 }
 
 const ilocosNorteData: LocationInfo[] = [
@@ -65,7 +65,9 @@ const ilocosNorteData: LocationInfo[] = [
             { name: "Starbucks", description: "The globally recognized coffeehouse chain, offering a familiar menu of coffee, espresso drinks, teas, and pastries in a modern setting.", googleMapsLink: "placeholder" },
             { name: "Jollibee", description: "The Philippines' most famous fast-food chain, offering favorites like Chickenjoy and Jolly Spaghetti. Multiple branches are available throughout the city.", googleMapsLink: "placeholder" },
             { name: "McDonald's", description: "The global fast-food giant, providing familiar options like burgers, fries, and coffee. A convenient choice for a quick meal.", googleMapsLink: "placeholder" },
-            { name: "7-Eleven", description: "A 24/7 convenience store where you can buy snacks, drinks, and other essentials. Many branches are scattered across the city for easy access.", googleMapsLink: "placeholder" }
+            { name: "7-Eleven", description: "A 24/7 convenience store where you can buy snacks, drinks, and other essentials. Many branches are scattered across the city for easy access.", googleMapsLink: "placeholder" },
+            { name: "Laoag Miki House", description: "A local favorite for warm miki noodle soup — a comforting Ilocano noodle dish.", googleMapsLink: "placeholder" }
+            ,{ name: "Laoag Empanada Stall", description: "Local empanadas sold around Sinking Bell Tower and Laoag City Public Market.", googleMapsLink: "placeholder" }
         ],
         accommodations: [
             { name: "Fort Ilocandia Resort Hotel", description: "A grand resort with a wide range of amenities.", price: "₱4,000 - ₱8,000/night" },
@@ -79,7 +81,8 @@ const ilocosNorteData: LocationInfo[] = [
             { name: "SM City Laoag", description: "The mall's supermarket and department store have sections dedicated to pasalubong, offering conveniently packaged local goods like Chichacorn, Biscocho, and Longganisa.", googleMapsLink: "placeholder" },
             { name: "Pasalubong Centers", description: "Several shops along the national highway offer pre-packaged goods like Biscocho, garlic, and woven products, perfect for easy souvenir shopping." }
         ],
-        nearbySuggestion: null
+        nearbySuggestion: null,
+        coords: { lat: 18.197222, lon: 120.593611 }
     },
     {
         name: "Batac City",
@@ -90,7 +93,8 @@ const ilocosNorteData: LocationInfo[] = [
             { name: "Batac Church (Immaculate Conception Parish)", description: "A historic church that is a central landmark of the city." }
         ],
         food: [
-            { name: "Batac Riverside Empanadahan", description: "A famous spot to try the authentic Batac Empanada, a deep-fried pastry filled with green papaya, longganisa, and egg.", googleMapsLink: "placeholder" }
+            { name: "Batac Riverside Empanadahan", description: "A famous spot to try the authentic Batac Empanada, a deep-fried pastry filled with green papaya, longganisa, and egg.", googleMapsLink: "placeholder" },
+            { name: "Miki at Batac Public Market", description: "A popular vendor serving local miki noodle soup in the Batac market area.", googleMapsLink: "placeholder" }
         ],
         accommodations: [
             { name: "Balay da Blas Pensionne House", description: "A cozy and affordable guesthouse in the city proper.", price: "₱1,200 - ₱2,500/night" }
@@ -98,7 +102,8 @@ const ilocosNorteData: LocationInfo[] = [
         souvenirs: [
             { name: "Batac Riverside Empanadahan Area", description: "Besides empanadas, you can find local vendors selling snacks and small souvenirs. The nearby public market is also a good spot for local products." }
         ],
-        nearbySuggestion: "Laoag City"
+        nearbySuggestion: "Paoay or Currimao",
+        coords: { lat: 18.056667, lon: 120.563889 }
     },
     // Municipalities
     {
@@ -109,7 +114,9 @@ const ilocosNorteData: LocationInfo[] = [
             { name: "Anuplig Falls", description: "A stunning multi-tiered waterfall perfect for trekking and swimming." }
         ],
         food: [
-            { name: "Bugnay Wine", description: "A local wine made from the fruit of the bugnay tree." }
+            { name: "Bugnay Wine", description: "A local wine made from the fruit of the bugnay tree." },
+            { name: "Adams Miki Stall", description: "A humble stall serving miki noodle soup often enjoyed after trekking; may be available at the market or near homestays.", googleMapsLink: "placeholder" },
+            { name: "Adams Empanada Stall", description: "A simple empanada stall often found at markets or near the town plaza.", googleMapsLink: "placeholder" }
         ],
         accommodations: [
             { name: "Local Homestays", description: "Experience the local culture by staying with a family. Arrangements are usually made upon arrival or via the local tourism office.", price: "₱500 - ₱1,000/night" }
@@ -117,7 +124,8 @@ const ilocosNorteData: LocationInfo[] = [
         souvenirs: [
             { name: "Local Producers in Adams", description: "The best souvenir here is the local **Bugnay Wine**. Ask your homestay host or the local tourism office where you can buy bottles directly from the producers for the best price." }
         ],
-        nearbySuggestion: "Pagudpud or Bangui"
+        nearbySuggestion: "Dumalneg or Pagudpud",
+        coords: { lat: 18.461389, lon: 120.903611 }
     },
     {
         name: "Bacarra",
@@ -127,13 +135,20 @@ const ilocosNorteData: LocationInfo[] = [
             { name: "Bacarra Domeless Bell Tower", description: "A ruined bell tower that has survived numerous earthquakes." }
         ],
         food: [
-            { name: "Bacarra Chichacorn", description: "A popular local snack made of crispy fried corn kernels." }
+            { name: "Bacarra Chichacorn", description: "A popular local snack made of crispy fried corn kernels." },
+            { name: "Ella's Crispy Fried Empanada", description: "A local stall in Bacarra known for its crispy empanadas, made fresh to order.", googleMapsLink: "placeholder" },
+            { name: "Alicia's Empanada and Food House", description: "A small eatery serving empanadas and local Ilocano dishes; popular with locals.", googleMapsLink: "placeholder" },
+            { name: "Bacarra Foodcourt", description: "A cluster of food stalls offering empanadas and other quick local bites.", googleMapsLink: "placeholder" }
+            ,{ name: "Bacarra Miki Corner", description: "A small local spot serving miki noodle soup and comfort foods near the market.", googleMapsLink: "placeholder" }
         ],
-        accommodations: [],
+        accommodations: [
+            { name: "Balai Antonio", description: "A charming guesthouse offering comfortable rooms and warm local hospitality.", price: "₱1,200 - ₱2,000/night" }
+        ],
         souvenirs: [
             { name: "Bacarra Public Market", description: "This is the best place to buy local snacks like the town's famous **Chichacorn**. You'll get it fresh and at a good price." }
         ],
-        nearbySuggestion: "Laoag City"
+        nearbySuggestion: "Vintar or Laoag City",
+        coords: { lat: 18.252778, lon: 120.611667 }
     },
     {
         name: "Badoc",
@@ -145,14 +160,16 @@ const ilocosNorteData: LocationInfo[] = [
             { name: "Badoc Island", description: "An emerging destination for beach lovers and snorkeling." }
         ],
         food: [
-            { name: "Fresh Seafood", description: "Enjoy freshly caught seafood from the local eateries near the coast." },
-            { name: "Tupig", description: "This grilled sticky rice cake is a common and beloved snack you can find from local vendors in Badoc." }
+            { name: "Tupig", description: "This grilled sticky rice cake is a common and beloved snack you can find from local vendors in Badoc." },
+            { name: "Badoc Miki Eatery", description: "A kiosk or small eatery serving warm miki soup popular with locals after a day at the beach.", googleMapsLink: "placeholder" },
+            { name: "Badoc Empanada Spot", description: "A local stall serving empanadas and fried snacks near the church or market.", googleMapsLink: "placeholder" }
         ],
         accommodations: [],
         souvenirs: [
             { name: "Local Stalls near Badoc Church", description: "You can often find vendors selling religious items and local snacks like **Tupig**. For more variety, it's best to head to the public market." }
         ],
-        nearbySuggestion: "Currimao or Laoag City"
+        nearbySuggestion: "Pinili or Currimao",
+        coords: { lat: 17.926667, lon: 120.473889 }
     },
     {
         name: "Bangui",
@@ -162,17 +179,19 @@ const ilocosNorteData: LocationInfo[] = [
             { name: "Bangui Windmills", description: "An iconic line of wind turbines that are a major source of renewable energy." }
         ],
         food: [
-            //{ }
+             { name: "18° North Camping Cafe and Diner", description: "Camping site in Bangui, with an onsite cafe/diner overlooking the windmills.", googleMapsLink: "placeholder"},
+            { name: "Bangui Miki & Kakanin Stall", description: "Local miki noodle soup and kakanin near the windmills.", googleMapsLink: "placeholder" },
+            { name: "Bangui Empanada Stall", description: "A small stall near the windmills and market selling empanadas and kakanin.", googleMapsLink: "placeholder" }
         ],
         accommodations: [
              { name: "Bangui Windmill Farm Stay", description: "Offers basic accommodations with a direct view of the windmills.", price: "₱1,500 - ₱2,500/night" },
-             { name: "Windmill View Inn", description: "A simple guesthouse offering affordable rooms close to the wind farm.", price: "₱1,000 - ₱2,000/night" },
-             { name: "18° North Camping Cafe and Diner", description: "Camping site in Bangui, with an onsite cafe/diner overlooking the windmills.", price: "₱1,000 - ₱5,000/night"}
+             { name: "Windmill View Inn", description: "A simple guesthouse offering affordable rooms close to the wind farm.", price: "₱1,000 - ₱2,000/night" }
         ],
         souvenirs: [
             { name: "Souvenir Shops at Bangui Windmills", description: "There are numerous stalls near the windmills selling miniature windmill keychains, t-shirts, and other trinkets. Prices are generally affordable." }
         ],
-        nearbySuggestion: "Pagudpud"
+        nearbySuggestion: "Pagudpud or Dumalneg",
+        coords: { lat: 18.536667, lon: 120.765833 }
     },
     {
         name: "Banna",
@@ -181,12 +200,16 @@ const ilocosNorteData: LocationInfo[] = [
         touristSpots: [
             { name: "Banna Zipline and Eco-Park", description: "Offers thrilling zipline rides and a relaxing escape in nature." }
         ],
-        food: [],
+        food: [
+            { name: "Banna Miki Nook", description: "A market stall serving miki noodle soup and other local snacks.", googleMapsLink: "placeholder" },
+            { name: "Banna Empanada Stall", description: "A popular stall serving empanadas and pastries at the public market.", googleMapsLink: "placeholder" }
+        ],
         accommodations: [],
         souvenirs: [
             { name: "No specific souvenir shops", description: "For pasalubong, your best bet is to visit the nearby **Batac City Public Market** for a wider selection of local products and delicacies." }
         ],
-        nearbySuggestion: "Batac City or Laoag City"
+        nearbySuggestion: "Nueva Era or Marcos",
+        coords: { lat: 17.980000, lon: 120.655000 }
     },
     {
         name: "Burgos",
@@ -199,7 +222,9 @@ const ilocosNorteData: LocationInfo[] = [
             { name: "Dragon Fruit Farms", description: "Visit a local farm (especially during the fruiting season) to taste fresh dragon fruit and see how it's grown." }
         ],
         food: [
-            { name: "Fresh Seafood", description: "Enjoy freshly caught seafood from the local fishermen." }
+            { name: "Fresh Seafood", description: "Enjoy freshly caught seafood from the local fishermen." },
+            { name: "Burgos Miki Stall", description: "A small eatery or market stall serving warm miki noodle soup popular with locals.", googleMapsLink: "placeholder" },
+            { name: "Burgos Empanada Stall", description: "Local empanadas can be found at market stalls and small roadside vendors.", googleMapsLink: "placeholder" }
         ],
         accommodations: [
             { name: "Keahana Resort", description: "A beachfront resort near the Kapurpurawan Rock Formation.", price: "₱2,000 - ₱4,000/night" },
@@ -208,7 +233,8 @@ const ilocosNorteData: LocationInfo[] = [
         souvenirs: [
             { name: "Stalls near Cape Bojeador & Kapurpurawan", description: "You'll find small stalls selling refreshments, dragon fruit (in season), and simple souvenirs like keychains and t-shirts near the main tourist spots." }
         ],
-        nearbySuggestion: "Pagudpud or Bangui"
+        nearbySuggestion: "Bangui or Pagudpud",
+        coords: { lat: 18.511111, lon: 120.643611 }
     },
     {
         name: "Carasi",
@@ -218,12 +244,16 @@ const ilocosNorteData: LocationInfo[] = [
             { name: "Cultural Immersion with Isnag Community", description: "Arrange a visit through the local tourism office to learn about the traditions and way of life of the indigenous Isnag people." },
             { name: "Trekking to Scenic Viewpoints", description: "Explore the mountainous terrain and discover breathtaking views of the Carasi landscape." }
         ],
-        food: [],
+        food: [
+            { name: "Carasi Miki Spot", description: "A small local stall or market vendor offering warm miki soup for hikers and visitors.", googleMapsLink: "placeholder" },
+            { name: "Carasi Empanada Stall", description: "Local empanadas sold near the town center and market; a quick and tasty snack.", googleMapsLink: "placeholder" }
+        ],
         accommodations: [],
         souvenirs: [
             { name: "No commercial souvenir shops", description: "The best souvenir from Carasi is the experience itself. However, for pasalubong, you would need to travel to **Laoag City**." }
         ],
-        nearbySuggestion: "Laoag City"
+        nearbySuggestion: "Solsona or Piddig",
+        coords: { lat: 18.140833, lon: 120.821389 }
     },
     {
         name: "Currimao",
@@ -234,6 +264,8 @@ const ilocosNorteData: LocationInfo[] = [
         ],
         food: [
             { name: "Fresh Seafood", description: "Dine at the beachfront restaurants and enjoy the fresh catch of the day." }
+            ,{ name: "Currimao Miki Stall", description: "Local miki noodle soup commonly sold at the public market and small eateries near the beach.", googleMapsLink: "placeholder" }
+            ,{ name: "Currimao Empanada Stall", description: "Try the local empanadas at market stalls near Pangil Beach and the town proper.", googleMapsLink: "placeholder" }
         ],
         accommodations: [
             { name: "Sitio Remedios Heritage Village Resort", description: "A unique resort featuring restored heritage houses.", price: "₱5,000 - ₱10,000/night" },
@@ -243,7 +275,8 @@ const ilocosNorteData: LocationInfo[] = [
         souvenirs: [
             { name: "No major souvenir shops", description: "While some resorts may have small gift shops, for a better and cheaper selection of souvenirs, it is recommended to visit the public market in **Laoag City** or the shops in **Paoay**." }
         ],
-        nearbySuggestion: null
+        nearbySuggestion: "Paoay or Pinili",
+        coords: { lat: 18.019444, lon: 120.486667 }
     },
     {
         name: "Dingras",
@@ -253,12 +286,16 @@ const ilocosNorteData: LocationInfo[] = [
             { name: "Dingras Church Ruins", description: "The ruins of the largest Catholic church in Ilocos Norte." },
             { name: "Scenic Rice Paddies", description: "Drive through the town and enjoy the picturesque views of the vast rice fields, especially during planting or harvest season." }
         ],
-        food: [],
+        food: [
+            { name: "Dingras Miki Stall", description: "Local miki served as a hearty meal in town; often available near the market.", googleMapsLink: "placeholder" },
+            { name: "Dingras Empanada Stall", description: "A market stall selling empanadas and local savory snacks.", googleMapsLink: "placeholder" }
+        ],
         accommodations: [],
         souvenirs: [
             { name: "Dingras Public Market", description: "You can find fresh local produce here. For a wider range of pasalubong and handicrafts, visiting the nearby town of **Sarrat** or **Laoag City** is recommended." }
         ],
-        nearbySuggestion: "Sarrat"
+        nearbySuggestion: "Piddig or Marcos",
+        coords: { lat: 18.1025, lon: 120.701389 }
     },
     {
         name: "Dumalneg",
@@ -267,12 +304,16 @@ const ilocosNorteData: LocationInfo[] = [
         touristSpots: [
              { name: "Dumalneg View Deck", description: "Offers panoramic views of the surrounding mountains and valleys." }
         ],
-        food: [],
+        food: [
+            { name: "Dumalneg Miki Stall", description: "A small local place where miki and other comfort soups are served, especially after trekking.", googleMapsLink: "placeholder" },
+            { name: "Dumalneg Empanada Stall", description: "Try simple and crispy empanadas at the market or near the town center.", googleMapsLink: "placeholder" }
+        ],
         accommodations: [],
         souvenirs: [
             { name: "No commercial souvenir shops", description: "Souvenir shopping is not common here. It is best to plan your shopping in larger towns like **Pagudpud** or **Laoag City**." }
         ],
-        nearbySuggestion: "Pagudpud or Bangui"
+        nearbySuggestion: "Pagudpud or Bangui",
+        coords: { lat: 18.521944, lon: 120.809722 }
     },
     {
         name: "Marcos",
@@ -281,12 +322,16 @@ const ilocosNorteData: LocationInfo[] = [
         touristSpots: [
             { name: "Marcos Lake (Marcos Dam)", description: "A serene man-made lake that offers a peaceful spot for picnics and enjoying the view." }
         ],
-        food: [],
+        food: [
+            { name: "Marcos Miki Stall", description: "A small market stall serving miki and local snacks, often open during market days.", googleMapsLink: "placeholder" },
+            { name: "Marcos Empanada Stall", description: "A market stall selling empanadas and other quick bites during market days.", googleMapsLink: "placeholder" }
+        ],
         accommodations: [],
         souvenirs: [
             { name: "No specific souvenir shops", description: "For pasalubong and souvenirs, the nearby **Batac City** offers plenty of options, from food items to local crafts." }
         ],
-        nearbySuggestion: "Batac City"
+        nearbySuggestion: "Dingras or Banna",
+        coords: { lat: 18.043889, lon: 120.677222 }
     },
     {
         name: "Nueva Era",
@@ -295,12 +340,16 @@ const ilocosNorteData: LocationInfo[] = [
         touristSpots: [
             { name: "Nueva Era Eco-Cultural Park", description: "A park showcasing the culture of the Tingguian tribe and the natural beauty of the area." }
         ],
-        food: [],
+        food: [
+            { name: "Nueva Era Miki Stall", description: "A local miki noodle spot usually found near eco-tourism centers and the park entrance.", googleMapsLink: "placeholder" },
+            { name: "Nueva Era Empanada Stall", description: "A local empanada vendor near the eco-cultural park or public market.", googleMapsLink: "placeholder" }
+        ],
         accommodations: [],
         souvenirs: [
             { name: "Nueva Era Eco-Cultural Park Gift Shop", description: "The park may have a small selection of locally made crafts from the Tingguian community. For more variety, travel to **Laoag City**." }
         ],
-        nearbySuggestion: "Banna"
+        nearbySuggestion: "Banna or Marcos",
+        coords: { lat: 17.915278, lon: 120.666111 }
     },
     {
         name: "Pagudpud",
@@ -314,9 +363,10 @@ const ilocosNorteData: LocationInfo[] = [
             { name: "Bantay Abot Cave", description: "A fascinating rock formation on the coast with a hole in the middle, offering a picturesque view of the sea." }
         ],
         food: [
-            //{ name: "", description: ""},
             { name: "Wilac Foodhouse", description: "This charming eatery offers an array of delicious Ilocano dishes that are sure to satisfy your cravings without breaking the bank"},
             { name: "Fresh Seafood", description: "Enjoy the catch of the day at the various restaurants and eateries lining Saud Beach and Blue Lagoon." },
+            { name: "Pagudpud Miki Stall", description: "Local miki noodle soup often found at the public market or near the town proper.", googleMapsLink: "placeholder" },
+            { name: "Pagudpud Empanada Stall", description: "Try empanadas and local snacks at the seaside and town markets.", googleMapsLink: "placeholder" },
             { name: "Local Eateries (Carinderias)", description: "For a more authentic and budget-friendly meal, try the local carinderias in the town proper, serving classic Ilocano dishes." }
         ],
         accommodations: [
@@ -329,7 +379,8 @@ const ilocosNorteData: LocationInfo[] = [
         souvenirs: [
             { name: "Stalls at Blue Lagoon & Saud Beach", description: "You'll find many stalls along the beachfront selling t-shirts, keychains, shell crafts, and other beach-themed souvenirs at very reasonable prices." }
         ],
-        nearbySuggestion: null
+        nearbySuggestion: "Bangui or Dumalneg",
+        coords: { lat: 18.56, lon: 120.788611 }
     },
     {
         name: "Paoay",
@@ -342,6 +393,8 @@ const ilocosNorteData: LocationInfo[] = [
         ],
         food: [
             { name: "Pinakbet Pizza", description: "An Ilocano twist on a classic. You can find this unique dish at local restaurants near Paoay Church." },
+            { name: "Paoay Miki Corner", description: "A local miki noodle spot often found near the town proper or the market.", googleMapsLink: "placeholder" },
+            { name: "Paoay Empanada Stall", description: "Empanadas and local fried snacks available near the market and town center.", googleMapsLink: "placeholder" },
             { name: "Tupig", description: "A popular Ilocano snack made from glutinous rice flour, coconut milk, and molasses, wrapped in banana leaves and grilled over charcoal." }
         ],
         accommodations: [
@@ -351,7 +404,8 @@ const ilocosNorteData: LocationInfo[] = [
         souvenirs: [
             { name: "Shops around Paoay Church", description: "The area surrounding the church is filled with shops selling Inabel woven products, pottery, miniature churches, and local snacks like Tupig. It's a one-stop shop for great souvenirs." }
         ],
-        nearbySuggestion: "Laoay City"
+        nearbySuggestion: "Batac City or Currimao",
+        coords: { lat: 18.061667, lon: 120.519444 }
     },
     {
         name: "Pasuquin",
@@ -362,13 +416,16 @@ const ilocosNorteData: LocationInfo[] = [
             { name: "Puyupuyan Beach (Sexy Beach)", description: "A quiet and beautiful stretch of coastline with fine gray sand, perfect for a relaxing swim away from the crowds." }
         ],
         food: [
-            { name: "Pasuquin Biscocho", description: "A famous local delicacy. It's a crispy, twice-baked bread coated with butter and sugar. A must-try pasalubong, which you can get fresh from the famous Pasuquin Bakery." }
+            { name: "Pasuquin Biscocho", description: "A famous local delicacy. It's a crispy, twice-baked bread coated with butter and sugar. A must-try pasalubong, which you can get fresh from the famous Pasuquin Bakery." },
+            { name: "Pasuquin Miki Stall", description: "A simple miki noodle stall at the town market serving a warm, comforting bowl.", googleMapsLink: "placeholder" },
+            { name: "Pasuquin Empanada Stall", description: "Try the crunchy local empanadas at the market or highway vendors.", googleMapsLink: "placeholder" }
         ],
         accommodations: [],
         souvenirs: [
             { name: "Pasuquin Bakery", description: "The number one pasalubong spot! This is where you can buy the famous **Pasuquin Biscocho** directly. It's cheap, delicious, and authentic.", googleMapsLink: "placeholder" }
         ],
-        nearbySuggestion: "Burgos or Laoag City"
+        nearbySuggestion: "Bacarra or Vintar",
+        coords: { lat: 18.333889, lon: 120.619444 }
     },
     {
         name: "Piddig",
@@ -380,12 +437,15 @@ const ilocosNorteData: LocationInfo[] = [
         ],
         food: [
             { name: "Basi", description: "The traditional Ilocano sugarcane wine. Piddig is historically linked to this famous local beverage due to the Basi Revolt." }
+            ,{ name: "Piddig Miki Nook", description: "A small local stall or carinderia offering miki and other local comfort soups.", googleMapsLink: "placeholder" }
+            ,{ name: "Piddig Empanada Corner", description: "A local stall selling hand-made empanadas and snacks near the market.", googleMapsLink: "placeholder" }
         ],
         accommodations: [],
         souvenirs: [
             { name: "Local Markets", description: "You can buy bottles of locally made **Basi** (sugarcane wine) here. For other types of souvenirs, the nearby town of **Sarrat** or **Laoag City** would have more choices." }
         ],
-        nearbySuggestion: "Sarrat"
+        nearbySuggestion: "Dingras or Sarrat",
+        coords: { lat: 18.163611, lon: 120.716389 }
     },
     {
         name: "Pinili",
@@ -397,13 +457,16 @@ const ilocosNorteData: LocationInfo[] = [
             { name: "Abel Weaving Village", description: "Visit local weavers and see the intricate process of creating traditional Inabel textiles on handlooms. A great place to buy authentic woven products." }
         ],
         food: [
-            { name: "Pinili Garlic", description: "Famous for its pungent and high-quality garlic." }
+            { name: "Pinili Garlic", description: "Famous for its pungent and high-quality garlic." },
+            { name: "Pinili Miki Stand", description: "A local snack stand serving miki and other comfort dishes.", googleMapsLink: "placeholder" },
+            { name: "Pinili Empanada Stall", description: "A snack stall or carinderia selling local-style empanadas and fried snacks.", googleMapsLink: "placeholder" }
         ],
         accommodations: [],
         souvenirs: [
             { name: "Abel Weaving Village", description: "The best place to buy authentic and affordable **Inabel textiles**. You can purchase blankets, towels, and placemats directly from the weavers." }
         ],
-        nearbySuggestion: "Currimao"
+        nearbySuggestion: "Badoc or Currimao",
+        coords: { lat: 17.951944, lon: 120.525833 }
     },
     {
         name: "San Nicolas",
@@ -416,15 +479,19 @@ const ilocosNorteData: LocationInfo[] = [
         food: [
             { name: "Food Court at Robinsons Ilocos", description: "Offers a wide variety of local and national food chains in one convenient location, perfect for a quick and affordable meal while shopping.", googleMapsLink: "placeholder" },
             { name: "Various Restaurants at Robinsons Ilocos", description: "The mall hosts several popular sit-down restaurants and cafes, providing more dining options.", googleMapsLink: "placeholder" }
+            ,{ name: "San Nicolas Miki House", description: "A cozy miki spot often found near the town center or public market, serving a comforting bowl of noodle soup.", googleMapsLink: "placeholder" }
+            ,{ name: "San Nicolas Empanada Stall", description: "A popular empanada stall near the market and Damili centers.", googleMapsLink: "placeholder" }
         ],
         accommodations: [
-            { name: "Pamulinawen Hotel", description: "A well-known hotel offering comfortable rooms and function halls.", price: "₱2,000 - ₱4,000/night" }
+            { name: "Green Meadows", description: "A comfortable hotel offering modern amenities, garden views, and convenient access to local attractions.", price: "₱2,000 - ₱4,000/night" },
+            { name: "San Nicolas Farm View Resort", description: "A family-friendly resort with farm views, outdoor pool, and event spaces — a relaxing countryside stay close to town.", price: "₱1,500 - ₱3,500/night" }
         ],
         souvenirs: [
             { name: "Damili Pottery Centers", description: "Visit the workshops to buy terracotta pots, bricks, and souvenir items like mini-clay pots (banga) at very cheap prices, directly from the artisans." },
             { name: "Robinsons Ilocos", description: "The mall has a supermarket and department store with sections dedicated to local delicacies and pasalubong.", googleMapsLink: "placeholder" }
         ],
-        nearbySuggestion: "Laoag City"
+        nearbySuggestion: "Laoag City or Sarrat",
+        coords: { lat: 18.175000, lon: 120.594167 }
     },
     {
         name: "Sarrat",
@@ -436,12 +503,15 @@ const ilocosNorteData: LocationInfo[] = [
         ],
         food: [
             { name: "Bocayo", description: "A sweet local candy made from grated coconut cooked in molasses or brown sugar." }
+            ,{ name: "Sarrat Miki Corner", description: "A small eatery or market stall serving miki noodle soup popular with locals.", googleMapsLink: "placeholder" }
+            ,{ name: "Sarrat Empanada Corner", description: "A local empanada stall near the market and church offering crispy empanadas.", googleMapsLink: "placeholder" }
         ],
         accommodations: [],
         souvenirs: [
             { name: "Sarrat Public Market", description: "A good place to find local sweets like **Bocayo** and other Ilocano snacks. It's a more local shopping experience than a tourist-focused one." }
         ],
-        nearbySuggestion: "Laoag City"
+        nearbySuggestion: "San Nicolas or Laoag City",
+        coords: { lat: 18.156667, lon: 120.646667 }
     },
     {
         name: "Solsona",
@@ -451,12 +521,16 @@ const ilocosNorteData: LocationInfo[] = [
             { name: "Garnaden Forest Park", description: "A nature park with waterfalls and hiking trails." },
             { name: "One-Degree Plateau", description: "A rising tourist spot offering a 'sea of clouds' experience and a great view of the sunrise, requires an early morning trek." }
         ],
-        food: [],
+        food: [
+            { name: "Solsona Miki Stall", description: "A regional miki stall usually found near main roads and the market, offering warms bowls for travelers.", googleMapsLink: "placeholder" },
+            { name: "Solsona Empanada Stall", description: "A roadside stall serving empanadas often popular with hikers and travelers.", googleMapsLink: "placeholder" }
+        ],
         accommodations: [],
         souvenirs: [
             { name: "No specific souvenir shops", description: "Solsona is more of an eco-tourism destination. For souvenir shopping, it is best to visit the markets and shops in **Laoag City**." }
         ],
-        nearbySuggestion: "Laoag City"
+        nearbySuggestion: "Carasi or Dingras",
+        coords: { lat: 18.095278, lon: 120.773333 }
     },
     {
         name: "Vintar",
@@ -466,17 +540,105 @@ const ilocosNorteData: LocationInfo[] = [
             { name: "Vintar Dam", description: "A large reservoir that offers opportunities for boating and picnicking." },
             { name: "Siwawer Eco-Tourism and Nature Park", description: "A nature park along the Vintar River, perfect for picnics, swimming, and enjoying the lush scenery." }
         ],
-        food: [
-             { name: "Vintar Longganisa", description: "A local version of the Ilocano sausage, known for its distinct flavor." },
-             { name: "Royal Bibingka", description: "A special sticky rice cake (kakanin) that's baked and has a chewy, sweet, and savory flavor. A famous delicacy from Vintar." }
-        ],
+           food: [
+               { name: "Vintar Longganisa", description: "A local version of the Ilocano sausage, known for its distinct flavor." },
+               { name: "Royal Bibingka", description: "A special sticky rice cake (kakanin) that's baked and has a chewy, sweet, and savory flavor. A famous delicacy from Vintar." },
+              { name: "Vintar Miki Corner", description: "A casual miki noodle spot often found near the town market.", googleMapsLink: "placeholder" },
+              { name: "Vintar Empanada Stall", description: "Local empanadas sold near the market and town center.", googleMapsLink: "placeholder" }
+           ],
         accommodations: [],
         souvenirs: [
             { name: "Local Bakeries and Market", description: "The best souvenir from Vintar is its famous **Royal Bibingka**. You can buy this delicious rice cake from local bakeries in the town proper. The public market is also great for **Vintar Longganisa**." }
         ],
-        nearbySuggestion: "Laoag City"
+        nearbySuggestion: "Bacarra or Laoag City",
+        coords: { lat: 18.229722, lon: 120.649167 }
     }
 ];
+
+// --- Geo helper utilities ---
+const toRadians = (deg: number) => deg * (Math.PI / 180);
+const haversineDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+    const R = 6371; // km
+    const dLat = toRadians(lat2 - lat1);
+    const dLon = toRadians(lon2 - lon1);
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+};
+
+const computeNearbySuggestionsFromCoords = (data: LocationInfo[]) => {
+    // For each location that has coords, find the two nearest neighbors with coords
+    for (const loc of data) {
+        if (!loc.coords) continue;
+        const distances = data
+            .filter(other => other.name !== loc.name && other.coords)
+            .map(other => ({ name: other.name, dist: haversineDistance(loc.coords!.lat, loc.coords!.lon, other.coords!.lat, other.coords!.lon) }))
+            .sort((a, b) => a.dist - b.dist);
+        if (distances.length === 0) continue;
+        const top1 = distances[0];
+        const top2 = distances[1];
+        if (top1 && top2) loc.nearbySuggestion = `${top1.name} or ${top2.name}`;
+        else if (top1) loc.nearbySuggestion = top1.name;
+    }
+};
+
+// Recompute nearbySuggestion based on coordinates for better accuracy on map-based routing
+computeNearbySuggestionsFromCoords(ilocosNorteData);
+
+// Build a simple adjacency list for towns: each town connects to its K nearest neighbors.
+const buildAdjacency = (data: LocationInfo[], k = 4) => {
+    const adj: { to: number; cost: number }[][] = new Array(data.length).fill(0).map(() => []);
+    const indicesWithCoords: number[] = [];
+    data.forEach((l, idx) => { if (l.coords) indicesWithCoords.push(idx); });
+
+    for (const i of indicesWithCoords) {
+        const a = data[i];
+        const dists = indicesWithCoords
+            .filter(j => j !== i)
+            .map(j => ({ j, dist: haversineDistance(a.coords!.lat, a.coords!.lon, data[j].coords!.lat, data[j].coords!.lon) }))
+            .sort((x, y) => x.dist - y.dist)
+            .slice(0, k);
+
+        for (const { j, dist } of dists) {
+            adj[i].push({ to: j, cost: dist });
+            // ensure bidirectional
+            adj[j].push({ to: i, cost: dist });
+        }
+    }
+    return adj;
+};
+
+// Simple Dijkstra implementation (O(n^2)) - sufficient for small graphs
+const dijkstra = (adj: { to: number; cost: number }[][], start: number, goal: number) => {
+    const n = adj.length;
+    const dist = new Array(n).fill(Infinity);
+    const prev = new Array(n).fill(-1);
+    const visited = new Array(n).fill(false);
+    dist[start] = 0;
+    for (let iter = 0; iter < n; iter++) {
+        let u = -1;
+        let best = Infinity;
+        for (let i = 0; i < n; i++) {
+            if (!visited[i] && dist[i] < best) {
+                best = dist[i];
+                u = i;
+            }
+        }
+        if (u === -1) break;
+        if (u === goal) break;
+        visited[u] = true;
+        for (const e of adj[u]) {
+            if (dist[u] + e.cost < dist[e.to]) {
+                dist[e.to] = dist[u] + e.cost;
+                prev[e.to] = u;
+            }
+        }
+    }
+    if (dist[goal] === Infinity) return null;
+    const path: number[] = [];
+    for (let u = goal; u !== -1; u = prev[u]) path.unshift(u);
+    return path;
+};
 
 const alternativeSuggestions: { [key: string]: { name: string; reason: string } } = {
     // Tourist Spots
@@ -559,6 +721,432 @@ const App = () => {
         const encodedQuery = encodeURIComponent(query);
         return `https://www.google.com/maps/search/?api=1&query=${encodedQuery}`;
     };
+
+    // Generate a simple itinerary for N days in a given place using the local data
+    const generateItinerary = (days: number, placeQuery: string) => {
+        const placeLower = placeQuery.toLowerCase().trim();
+
+        // helper: find location by name/keyword/substring
+        const findLocation = (q: string) => {
+            q = q.toLowerCase().trim();
+            let loc = ilocosNorteData.find(l => l.name.toLowerCase() === q);
+            if (loc) return loc;
+            loc = ilocosNorteData.find(l => l.keywords.some(k => k === q));
+            if (loc) return loc;
+            loc = ilocosNorteData.find(l => l.name.toLowerCase().includes(q) || q.includes(l.name.toLowerCase()));
+            return loc;
+        };
+
+        // time-based offset to vary outputs between calls (so repeated requests get different results)
+        const offset = Math.floor(Date.now() / 1000) % 997; // change every second, mod prime for distribution
+
+            // Special case: user asked for Ilocos Norte (province-wide itinerary)
+            if (/(^|\b)ilocos\s*norte\b|^ilocos$/i.test(placeLower)) {
+                const allLocations = ilocosNorteData.filter(l => l.touristSpots && l.touristSpots.length > 0);
+
+                // If user requested a long trip (more than 14 days), provide a week-by-week overview
+                if (days > 14) {
+                    const weeks = Math.ceil(days / 7);
+                    const textLines: string[] = [];
+                    textLines.push(`Here is a suggested **${weeks}-week itinerary** across **Ilocos Norte** (overview):`);
+                    let start = offset % allLocations.length;
+                    for (let w = 1; w <= weeks; w++) {
+                        const loc = allLocations[(start + w - 1) % allLocations.length];
+                        const highlights = (loc.touristSpots || []).slice(0, 3).map(s => `**${s.name}**: ${s.description}`);
+                        textLines.push(`\n**Week ${w}: Base in ${loc.name}**`);
+                        if (highlights.length > 0) {
+                            textLines.push(`- Highlights: ${highlights.join('; ')}`);
+                        }
+                        const food = loc.food && loc.food.length > 0 ? loc.food[(offset + w - 1) % loc.food.length] : undefined;
+                        if (food) {
+                            textLines.push(`- Try local food: **${food.name}** — ${food.description}` + (food.googleMapsLink ? ` ([map](${food.googleMapsLink}))` : ''));
+                        }
+                        const stay = loc.accommodations && loc.accommodations.length > 0 ? loc.accommodations[(offset + w - 1) % loc.accommodations.length] : undefined;
+                        if (stay) {
+                            textLines.push(`- Accommodation suggestion: **${stay.name}** — ${stay.price ?? stay.description}` + (stay.googleMapsLink ? ` ([map](${stay.googleMapsLink}))` : ''));
+                        }
+                        textLines.push(`- Note: Travel between towns may take 1-2 hours by road; plan accordingly.`);
+                    }
+                    textLines.push(`\n**Tip:** This overview gives a weekly base and highlights; ask me to expand any week into a day-by-day plan.`);
+                    return textLines.join('\n');
+                }
+
+                // Short trips (<= 14 days): produce day-by-day plan, rotating start to vary between requests
+                const textLines: string[] = [];
+                textLines.push(`Here is a suggested **${days}-day itinerary** across **Ilocos Norte**:`);
+                const route: LocationInfo[] = [];
+                let start = offset % allLocations.length;
+                for (let i = 0; i < Math.min(days, allLocations.length); i++) {
+                    const loc = allLocations[(start + i) % allLocations.length];
+                    route.push(loc);
+                }
+                for (let d = 1; d <= days; d++) {
+                    const loc = route[(d - 1) % route.length];
+                    const spotIndex = (offset + d - 1) % (loc.touristSpots.length || 1);
+                    const spot = loc.touristSpots[spotIndex];
+                    textLines.push(`\n**Day ${d}: ${loc.name}**`);
+                    if (spot) {
+                        textLines.push(`- Visit **${spot.name}** — ${spot.description} ([map](${generateMapLink(spot.name + ' ' + loc.name)}))`);
+                    }
+                    const food = loc.food && loc.food.length > 0 ? loc.food[(offset + d - 1) % loc.food.length] : undefined;
+                    if (food) {
+                        textLines.push(`- Try local food: **${food.name}** — ${food.description}` + (food.googleMapsLink ? ` ([map](${food.googleMapsLink}))` : ''));
+                    }
+                    const stay = loc.accommodations && loc.accommodations.length > 0 ? loc.accommodations[(offset + d - 1) % loc.accommodations.length] : undefined;
+                    if (stay) {
+                        textLines.push(`- Accommodation suggestion: **${stay.name}** — ${stay.price ?? stay.description}` + (stay.googleMapsLink ? ` ([map](${stay.googleMapsLink}))` : ''));
+                    }
+                    textLines.push(`- Note: Travel between towns may take 1-2 hours by road; plan accordingly.`);
+                }
+                textLines.push(`\n**Tip:** If you'd like a more focused itinerary (e.g., only Pagudpud or Laoag), ask for that city specifically.`);
+                return textLines.join('\n');
+            }
+
+        const location = findLocation(placeLower);
+        if (!location) {
+            return `I couldn't find **${placeQuery}** as a city or municipality in Ilocos Norte. Please provide a valid Ilocos Norte city/municipality (for example: Laoag, Pagudpud, Paoay, Bangui).`;
+        }
+
+        // New behavior: keep accommodations in the requested town only.
+        // If the town has enough tourist spots to fill the requested days, keep the entire itinerary inside the town.
+        // If not, keep the stay in the requested town but recommend day trips to a nearby town for the extra days.
+        const spots = location.touristSpots || [];
+        const stays = location.accommodations || [];
+        const nearbyLoc = location.nearbySuggestion ? findLocation(location.nearbySuggestion.toLowerCase()) : null;
+
+        // Week-overview for long trips (more than 14 days) — keep base in requested town and use a single selected accommodation for the whole trip
+        if (days > 14) {
+            const weeks = Math.ceil(days / 7);
+            const weekLines: string[] = [];
+            weekLines.push(`Here is a suggested **${weeks}-week itinerary** starting in **${location.name}** (overview):`);
+            for (let w = 1; w <= weeks; w++) {
+                const base = location;
+                const highlights = (base.touristSpots || []).slice(0, 4).map(s => `**${s.name}**: ${s.description}`);
+                weekLines.push(`\n**Week ${w}: Base in ${base.name}**`);
+                if (highlights.length > 0) {
+                    weekLines.push(`- Highlights: ${highlights.join('; ')}`);
+                }
+                // Suggest a nearby town as a day-trip/side trip for variety
+                if (nearbyLoc) {
+                    const nearHighlights = (nearbyLoc.touristSpots || []).slice(0, 2).map(s => `**${s.name}**`);
+                    if (nearHighlights.length > 0) {
+                        weekLines.push(`- Day-trip suggestion: ${nearbyLoc.name} — visit ${nearHighlights.join(', ')}`);
+                    }
+                }
+                // pick a single accommodation to use as the base stay for the whole trip
+                const selectedBaseStay = base.accommodations && base.accommodations.length > 0 ? base.accommodations[offset % base.accommodations.length] : undefined;
+                if (selectedBaseStay) {
+                    weekLines.push(`- Accommodation suggestion: **${selectedBaseStay.name}** — ${selectedBaseStay.price ?? selectedBaseStay.description}` + (selectedBaseStay.googleMapsLink ? ` ([map](${selectedBaseStay.googleMapsLink}))` : ''));
+                }
+            }
+            weekLines.push(`\n**Note:** You will be based in ${location.name} for the whole trip. Ask me to expand any week into a day-by-day plan.`);
+            return weekLines.join('\n');
+        }
+
+        // If the town has enough spots for the requested days, keep everything within the town
+        const textLines: string[] = [];
+        if (spots.length >= days) {
+            // select a single accommodation for the base town and use it every night
+            const selectedStay = stays.length > 0 ? stays[offset % stays.length] : undefined;
+            textLines.push(`Here is a suggested **${days}-day itinerary** for **${location.name}** (based in ${location.name} for the whole trip):`);
+            for (let d = 1; d <= days; d++) {
+                const spot = spots[(offset + d - 1) % spots.length];
+                const food = location.food && location.food.length > 0 ? location.food[(offset + d - 1) % location.food.length] : undefined;
+
+                textLines.push(`\n**Day ${d}: ${location.name}**`);
+                if (spot) {
+                    textLines.push(`- Morning / Midday: Visit **${spot.name}** — ${spot.description} ([map](${generateMapLink(spot.name + ' ' + location.name)}))`);
+                } else {
+                    textLines.push(`- Morning / Midday: Explore local attractions.`);
+                }
+                if (food) {
+                    textLines.push(`- Lunch/Dinner: Try **${food.name}** — ${food.description}` + (food.googleMapsLink ? ` ([map](${food.googleMapsLink}))` : ''));
+                }
+                if (selectedStay) {
+                    textLines.push(`- Stay (base in ${location.name}): **${selectedStay.name}** — ${selectedStay.price ?? selectedStay.description}` + (selectedStay.googleMapsLink ? ` ([map](${selectedStay.googleMapsLink}))` : ''));
+                } else {
+                    textLines.push(`- Stay: Consider local guesthouses or nearby hotels in ${location.nearbySuggestion || 'the nearest town'}.`);
+                }
+                textLines.push(`- Evening: Relax and enjoy local culture or sunset views.`);
+            }
+            return textLines.join('\n');
+        }
+
+        // If the town does NOT have enough spots for the requested days:
+        // - Fill days with the town's spots first
+        // - For remaining days, recommend day trips to the nearby town(s) but keep the accommodation in the requested town
+        textLines.push(`Here is a suggested **${days}-day itinerary** based in **${location.name}**. You will stay in ${location.name} for the entire trip.`);
+
+        // Days covered inside the town — choose a single selected stay for the base town
+        const selectedStayForBase = stays.length > 0 ? stays[offset % stays.length] : undefined;
+        for (let d = 1; d <= Math.min(spots.length, days); d++) {
+            const spot = spots[(offset + d - 1) % spots.length];
+            const food = location.food && location.food.length > 0 ? location.food[(offset + d - 1) % location.food.length] : undefined;
+
+            textLines.push(`\n**Day ${d}: ${location.name}**`);
+            if (spot) {
+                textLines.push(`- Morning / Midday: Visit **${spot.name}** — ${spot.description} ([map](${generateMapLink(spot.name + ' ' + location.name)}))`);
+            }
+            if (food) {
+                textLines.push(`- Lunch/Dinner: Try **${food.name}** — ${food.description}` + (food.googleMapsLink ? ` ([map](${food.googleMapsLink}))` : ''));
+            }
+            if (selectedStayForBase) {
+                textLines.push(`- Stay (base in ${location.name}): **${selectedStayForBase.name}** — ${selectedStayForBase.price ?? selectedStayForBase.description}` + (selectedStayForBase.googleMapsLink ? ` ([map](${selectedStayForBase.googleMapsLink}))` : ''));
+            }
+            textLines.push(`- Evening: Relax and enjoy local culture or sunset views.`);
+        }
+
+        // Remaining days: recommend day trips to nearby town(s)
+        let dayCounter = Math.min(spots.length, days);
+        const remaining = days - dayCounter;
+
+        if (remaining > 0) {
+            if (nearbyLoc && (nearbyLoc.touristSpots || []).length > 0) {
+                for (let r = 1; r <= remaining; r++) {
+                    dayCounter++;
+                    const spot = nearbyLoc.touristSpots[(offset + r - 1) % nearbyLoc.touristSpots.length];
+                    const food = nearbyLoc.food && nearbyLoc.food.length > 0 ? nearbyLoc.food[(offset + r - 1) % nearbyLoc.food.length] : undefined;
+
+                    textLines.push(`\n**Day ${dayCounter}: ${nearbyLoc.name} (Day trip from ${location.name})**`);
+                    if (spot) {
+                        textLines.push(`- Visit **${spot.name}** — ${spot.description} ([map](${generateMapLink(spot.name + ' ' + nearbyLoc.name)}))`);
+                    } else {
+                        textLines.push(`- Explore main sights in ${nearbyLoc.name}.`);
+                    }
+                    if (food) {
+                        textLines.push(`- Lunch/Dinner: Try **${food.name}** — ${food.description}` + (food.googleMapsLink ? ` ([map](${food.googleMapsLink}))` : ''));
+                    }
+                    if (selectedStayForBase) {
+                        textLines.push(`- Return to ${location.name} for the night and stay at **${selectedStayForBase.name}**.`);
+                    } else {
+                        textLines.push(`- Return to ${location.name} for the night.`);
+                    }
+                    textLines.push(`- Note: Travel time may vary; plan for transport back to ${location.name} in the evening.`);
+                }
+            } else {
+                // No nearby town with activities found — recommend a nearbySuggestion name or other towns
+                const suggestionName = location.nearbySuggestion;
+                for (let r = 1; r <= remaining; r++) {
+                    dayCounter++;
+                    textLines.push(`\n**Day ${dayCounter}: ${location.name} (Flexible day)**`);
+                    textLines.push(`- ${location.name} has limited major attractions for a full day. Consider a day-trip to **${suggestionName || 'a nearby town with more activities'}**, or use this day to relax, try local food, or take a longer exploration of the surroundings.`);
+                    if (stays.length > 0) {
+                        textLines.push(`- Stay (base in ${location.name}): **${stays[0].name}** — ${stays[0].price ?? stays[0].description}` + (stays[0].googleMapsLink ? ` ([map](${stays[0].googleMapsLink}))` : ''));
+                    }
+                }
+            }
+        }
+
+        if (location.nearbySuggestion) {
+            textLines.push(`\n**Tip:** ${location.name} has fewer major attractions; consider extending your trip with a visit to nearby **${location.nearbySuggestion}** for more variety.`);
+        }
+
+        return textLines.join('\n');
+    };
+
+    // Helper to find a location by name / keyword / substring (reuse across handlers)
+    const findLocation = (q: string): LocationInfo | undefined => {
+        q = q.toLowerCase().trim();
+        let loc = ilocosNorteData.find(l => l.name.toLowerCase() === q);
+        if (loc) return loc;
+        loc = ilocosNorteData.find(l => l.keywords.some(k => k === q));
+        if (loc) return loc;
+        loc = ilocosNorteData.find(l => l.name.toLowerCase().includes(q) || q.includes(l.name.toLowerCase()));
+        return loc;
+    };
+
+    // Itinerary request handler: "give me an itinerary for X days in Y"
+    const itineraryRegex = /(?:give me an |create an |make an |)?itinerary(?: for)?\s*(?:about\s*)?(\d{1,2})\s*days?\s*(?:in|for)\s*([a-zA-Z0-9\s'\-]+)/i;
+    const itMatch = userInput.match(itineraryRegex);
+    if (itMatch) {
+        const days = parseInt(itMatch[1], 10) || 1;
+        const place = itMatch[2].trim();
+        return generateItinerary(days, place);
+    }
+
+    // Also match patterns like "give me a 3 day itinerary for ilocos norte" (number before 'itinerary')
+    const itineraryRegex2 = /(?:give me|create|make)(?: me| an)?\s*(\d{1,2})\s*days?\s*(?:day)?\s*itinerary\s*(?:for|in)\s*([a-zA-Z0-9\s'\-]+)/i;
+    const itMatch2 = userInput.match(itineraryRegex2);
+    if (itMatch2) {
+        const days = parseInt(itMatch2[1], 10) || 1;
+        const place = itMatch2[2].trim();
+        return generateItinerary(days, place);
+    }
+
+    // Broad fallback: if user mentions 'itinerary' and includes a number anywhere, try to extract days and place.
+    if (/\bitinerary\b/.test(lowerInput)) {
+        const numMatch = lowerInput.match(/(\d{1,2})/);
+        if (numMatch) {
+            const days = parseInt(numMatch[1], 10) || 1;
+            const placeMatch = lowerInput.match(/(?:for|in)\s+([a-zA-Z0-9\s'\-]+)/);
+            let place: string | null = null;
+            if (placeMatch) {
+                place = placeMatch[1].trim();
+            } else if (/\bilocos\b/.test(lowerInput)) {
+                place = 'Ilocos Norte';
+            }
+
+            if (place) {
+                return generateItinerary(days, place);
+            }
+        }
+    }
+
+    // Cost estimation handler: if user asks about cost after an itinerary, provide a breakdown
+    const costKeywords = /\b(cost|how much|estimate|price|expense|budget|how much will)\b/;
+    if (costKeywords.test(lowerInput)) {
+        // Try to find the most recent itinerary-related user request in the conversation
+        let requestDays: number | null = null;
+        let requestPlace: string | null = null;
+
+        // search messages for the last user message that looks like an itinerary request
+        for (let i = messages.length - 1; i >= 0; i--) {
+            const msg = messages[i];
+            if (msg.author === Author.USER) {
+                // Try the explicit regexes used earlier
+                const m1 = msg.text.match(/(?:give me an |create an |make an |)?itinerary(?: for)?\s*(?:about\s*)?(\d{1,3})\s*days?\s*(?:in|for)\s*([a-zA-Z0-9\s'\-]+)/i);
+                const m2 = msg.text.match(/(?:give me|create|make)(?: me| an)?\s*(\d{1,3})\s*days?\s*(?:day)?\s*itinerary\s*(?:for|in)\s*([a-zA-Z0-9\s'\-]+)/i);
+                if (m1) {
+                    requestDays = parseInt(m1[1], 10);
+                    requestPlace = m1[2].trim();
+                    break;
+                }
+                if (m2) {
+                    requestDays = parseInt(m2[1], 10);
+                    requestPlace = m2[2].trim();
+                    break;
+                }
+
+                // Handle weeks/months phrases in the user message
+                const unit = msg.text.match(/(\d{1,3})\s*(week|weeks|month|months)/i);
+                if (unit) {
+                    const n = parseInt(unit[1], 10);
+                    requestDays = /week/i.test(unit[2]) ? n * 7 : n * 30;
+                    const placeMatch = msg.text.match(/(?:for|in)\s+([a-zA-Z0-9\s'\-]+)/i);
+                    if (placeMatch) requestPlace = placeMatch[1].trim();
+                    break;
+                }
+            }
+        }
+
+        // If not found in history, try to parse the current message for place/days
+        if (!requestDays || !requestPlace) {
+            const m1 = userInput.match(/(\d{1,3})\s*(?:days|day)/i);
+            if (m1) requestDays = parseInt(m1[1], 10);
+            const placeMatch = userInput.match(/(?:for|in)\s+([a-zA-Z0-9\s'\-]+)/i);
+            if (placeMatch) requestPlace = placeMatch[1].trim();
+            const unit = userInput.match(/(\d{1,3})\s*(week|weeks|month|months)/i);
+            if (unit && !requestDays) {
+                const n = parseInt(unit[1], 10);
+                requestDays = /week/i.test(unit[2]) ? n * 7 : n * 30;
+            }
+        }
+
+        // If user referred to "this itinerary" or we still don't have details, try to extract details from the last bot itinerary message
+        if (!requestDays || !requestPlace || /\b(this|that) itinerary\b/i.test(userInput)) {
+            for (let i = messages.length - 1; i >= 0; i--) {
+                const msg = messages[i];
+                // Look into bot messages containing an itinerary
+                if (msg.author === Author.BOT && /\bitinerary\b/i.test(msg.text)) {
+                    // Try to extract days like '3-day' or '3 day' or '3-day itinerary' or '3-day itinerary across Ilocos Norte'
+                    const dayMatch = msg.text.match(/(\d{1,3})\s*-?\s*day/i) || msg.text.match(/(\d{1,3})\s*days?/i);
+                    if (dayMatch) requestDays = requestDays || parseInt(dayMatch[1], 10);
+
+                    // Try to find a location name present in the bot message by checking against known locations
+                    for (const loc of ilocosNorteData) {
+                        if (msg.text.toLowerCase().includes(loc.name.toLowerCase())) {
+                            requestPlace = requestPlace || loc.name;
+                            break;
+                        }
+                        // also check keywords
+                        for (const kw of loc.keywords) {
+                            if (kw && msg.text.toLowerCase().includes(kw)) {
+                                requestPlace = requestPlace || loc.name;
+                                break;
+                            }
+                        }
+                        if (requestPlace) break;
+                    }
+
+                    if (requestDays && requestPlace) break;
+                }
+            }
+        }
+
+        if (!requestDays || !requestPlace) {
+            return "I can estimate costs for an itinerary. Which itinerary are you referring to? Tell me the number of days (or weeks/months) and the city/municipality in Ilocos Norte.";
+        }
+
+        // Estimate costs based on local data
+        const estimateItineraryCost = (days: number, placeQuery: string) => {
+            const q = placeQuery.toLowerCase().trim();
+            const findLocation = (qq: string) => ilocosNorteData.find(l => l.name.toLowerCase() === qq) || ilocosNorteData.find(l => l.keywords.some(k => k === qq)) || ilocosNorteData.find(l => l.name.toLowerCase().includes(qq) || qq.includes(l.name.toLowerCase()));
+
+            const location = findLocation(q);
+            // if location not found, attempt province-wide average
+            const avgAccommodation = (acc: { price?: string }[]) => {
+                if (!acc || acc.length === 0) return 2000;
+                const prices: number[] = acc.map(a => {
+                    if (!a.price) return 2000;
+                    const nums = (a.price.match(/\d[\d,]*/g) || []).map(s => parseInt(s.replace(/,/g, ''), 10));
+                    if (nums.length === 0) return 2000;
+                    return Math.round(nums.reduce((s, n) => s + n, 0) / nums.length);
+                });
+                return Math.round(prices.reduce((s, n) => s + n, 0) / prices.length);
+            };
+
+            // Build chain similar to generateItinerary for multi-day trips
+            const startLoc = location || ilocosNorteData[0];
+            const chain: LocationInfo[] = [startLoc];
+            let next = startLoc.nearbySuggestion;
+            const used = new Set<string>([startLoc.name]);
+            while (chain.length < days && next) {
+                const nl = findLocation(next.toLowerCase());
+                if (!nl || used.has(nl.name)) break;
+                chain.push(nl);
+                used.add(nl.name);
+                next = nl.nearbySuggestion || null;
+            }
+            if (chain.length < days) {
+                const others = ilocosNorteData.filter(l => !used.has(l.name) && l.touristSpots && l.touristSpots.length > 0);
+                let idx = 0;
+                while (chain.length < days && others.length > 0) {
+                    const add = others[idx % others.length];
+                    if (!used.has(add.name)) {
+                        chain.push(add);
+                        used.add(add.name);
+                    }
+                    idx++;
+                }
+            }
+
+            // Accommodation cost: average per-night across the chain
+            const accPerNight = Math.max(1000, Math.round(chain.reduce((sum, l) => sum + avgAccommodation(l.accommodations || []), 0) / chain.length));
+            const accommodationTotal = accPerNight * days;
+
+            // Food estimate: average 600 PHP per day
+            const foodPerDay = 600;
+            const foodTotal = foodPerDay * days;
+
+            // Transport estimate: average 400 PHP per day (inter-city/local transport)
+            const transportPerDay = 400;
+            const transportTotal = transportPerDay * days;
+
+            const misc = Math.round(0.1 * (accommodationTotal + foodTotal + transportTotal));
+            const grandTotal = accommodationTotal + foodTotal + transportTotal + misc;
+
+            const breakdown = `Estimated cost for a **${days}-day** trip in **${placeQuery}**:\n\n` +
+                `- Accommodation (avg ₱${accPerNight.toLocaleString()} / night): ₱${accommodationTotal.toLocaleString()}\n` +
+                `- Food (avg ₱${foodPerDay} / day): ₱${foodTotal.toLocaleString()}\n` +
+                `- Transport (avg ₱${transportPerDay} / day): ₱${transportTotal.toLocaleString()}\n` +
+                `- Misc / Buffer (10%): ₱${misc.toLocaleString()}\n\n` +
+                `**Estimated total:** ₱${grandTotal.toLocaleString()} (approximate)`;
+
+            return breakdown;
+        };
+
+        return estimateItineraryCost(requestDays, requestPlace);
+    }
 
     // 1. Handle greetings
     if (/\b(hi|hello|hey|good day|good morning|good afternoon|good evening)\b/.test(lowerInput)) {
@@ -664,6 +1252,87 @@ const App = () => {
     }
     
     // 5. Special handler for Empanada queries to override generic location matching
+    // New: handle queries like "Where can I eat <food> in <place>?"
+    const eatInRegex = /where can i eat\s+(.+?)\s+(?:in|at)\s+([a-zA-Z0-9\s'\-]+)/i;
+    const eatInMatch = userInput.match(eatInRegex);
+    if (eatInMatch) {
+        const dish = eatInMatch[1].trim().toLowerCase();
+        const placeName = eatInMatch[2].trim();
+        const findLoc = (q: string) => {
+            q = q.toLowerCase().trim();
+            return ilocosNorteData.find(l => l.name.toLowerCase() === q)
+                || ilocosNorteData.find(l => l.keywords.some(k => k === q))
+                || ilocosNorteData.find(l => l.name.toLowerCase().includes(q) || q.includes(l.name.toLowerCase()));
+        };
+        const loc = findLoc(placeName);
+        if (!loc) {
+            return `I couldn't find **${placeName}** in Ilocos Norte. Try asking 'Where can I eat ${dish} in Laoag or Pagudpud?'.`;
+        }
+
+        // Find matching food entries in that town
+        const matches = (loc.food || []).filter(f => (f.name && f.name.toLowerCase().includes(dish)) || (f.description && f.description.toLowerCase().includes(dish)));
+        if (matches.length > 0) {
+            let resp = `Here are places in **${loc.name}** to try **${dish}**:\n\n`;
+            matches.forEach(f => {
+                resp += `- **${f.name}**: ${f.description}` + (('googleMapsLink' in f && f.googleMapsLink) ? ` ([map](${generateMapLink(f.name + ' ' + loc.name)}))` : '') + `\n`;
+            });
+            return resp;
+        }
+
+        // No direct match — if the dish is 'miki' provide better fallback suggestions
+        if (dish.includes('miki')) {
+            // helper: find miki entries across the province
+            const findAllMiki = () => {
+                const results: { town: string; item: Detail }[] = [];
+                ilocosNorteData.forEach(l => {
+                    (l.food || []).forEach(f => {
+                        const name = (f.name || '').toLowerCase();
+                        const desc = (f.description || '').toLowerCase();
+                        if (name.includes('miki') || desc.includes('miki')) {
+                            results.push({ town: l.name, item: f });
+                        }
+                    });
+                });
+                return results;
+            };
+
+            // Try to find miki in nearby recommended towns first
+            const nearbyList = (loc.nearbySuggestion || '')
+                .split(/,| or | and /i)
+                .map(s => s.trim())
+                .filter(Boolean);
+
+            const allMiki = findAllMiki();
+            // Prioritize nearby town matches
+            let nearbyMatches = allMiki.filter(m => nearbyList.some(n => n.toLowerCase().includes(m.town.toLowerCase()) || m.town.toLowerCase().includes(n.toLowerCase())));
+
+            if (nearbyMatches.length === 0) {
+                // Also prefer matches in the same province town
+                nearbyMatches = allMiki.filter(m => m.town.toLowerCase() === loc.name.toLowerCase());
+            }
+
+            const chosen = (nearbyMatches.length > 0 ? nearbyMatches : allMiki).slice(0, 6);
+            if (chosen.length > 0) {
+                let resp = `I don't have a direct listing for **${dish}** in **${loc.name}**, but here are some places nearby where you can find **miki**:\n\n`;
+                chosen.forEach(c => {
+                    resp += `- **${c.town}**: **${c.item.name}** — ${c.item.description}` + (c.item.googleMapsLink ? ` ([map](${generateMapLink(c.item.name + ' ' + c.town)}))` : '') + `\n`;
+                });
+                return resp;
+            }
+            // None in the province
+            return `I couldn't find any spots serving **miki** in **${loc.name}** or nearby towns. Try asking about Laoag City or Batac City, where miki is commonly available.`;
+        }
+
+        // No direct match — suggest popular food stalls or general local dishes in that town
+        if ((loc.food || []).length > 0) {
+            const top = (loc.food || []).slice(0, 4).map(f => `**${f.name}**: ${f.description}`);
+            return `I don't have a direct match for **${dish}** in **${loc.name}**, but here are popular places/foods you can try there:\n\n- ${top.join('\n- ')}`;
+        }
+
+        // Nothing listed for that town
+        return `I don't have specific food listings for **${loc.name}**. You might try nearby **${loc.nearbySuggestion || 'Laoag City'}** for more options.`;
+    }
+
     if (/\b(empanada)\b/.test(lowerInput)) {
         // Handle queries comparing Batac and Laoag empanadas
         if (/\b(batac)\b/.test(lowerInput) && /\b(laoag)\b/.test(lowerInput)) {
@@ -677,6 +1346,67 @@ const App = () => {
 
         // Default to Batac for general empanada questions. This catches "empanada", "where is empanada", "empanada in batac".
         return "For the most authentic Ilocano empanada, you should head to **Batac City**! It's famous for the **Batac Riverside Empanadahan**, where you can watch them being made fresh. It's a crispy orange pastry filled with green papaya, monggo beans, longganisa, and a fresh egg. It's a must-try!";
+    }
+
+    // 6. Route / path queries like: "places I can visit from X to Y" or "starting from X to Y"
+    const routeRegex = /(?:places\s*(?:i\s*can\s*visit)?|what can i visit|can i visit|route|places to visit)?\s*(?:starting\s*from\s*|from\s*)([a-zA-Z0-9\s'\-]+?)\s*(?:to|towards|until)\s*([a-zA-Z0-9\s'\-]+)/i;
+    const routeMatch = userInput.match(routeRegex);
+    if (routeMatch) {
+        const startQuery = routeMatch[1].trim();
+        const endQuery = routeMatch[2].trim();
+        const startLoc = findLocation(startQuery);
+        const endLoc = findLocation(endQuery);
+        if (!startLoc || !endLoc) {
+            const missing = !startLoc ? startQuery : endQuery;
+            return `I couldn't find **${missing}** in Ilocos Norte. Please make sure you provided a valid city or municipality.`;
+        }
+
+        const startIndex = ilocosNorteData.findIndex(l => l.name.toLowerCase() === startLoc.name.toLowerCase());
+        const endIndex = ilocosNorteData.findIndex(l => l.name.toLowerCase() === endLoc.name.toLowerCase());
+        if (startIndex === -1 || endIndex === -1) {
+            return `I couldn't build a route between **${startLoc.name}** and **${endLoc.name}**.`;
+        }
+
+        // If both start and end have coordinates, build a more accurate route using geographic projections
+        let route: LocationInfo[] = [];
+        if (startLoc.coords && endLoc.coords) {
+            // Build graph by connecting each town to its K nearest neighbors (by straight-line distance)
+            const K_NEIGHBORS = 5;
+            const adj = buildAdjacency(ilocosNorteData, K_NEIGHBORS);
+            const pathIndices = dijkstra(adj, startIndex, endIndex);
+            if (pathIndices && pathIndices.length >= 2) {
+                route = pathIndices.map(i => ilocosNorteData[i]);
+            } else {
+                // Fallback to array-order route if Dijkstra fails
+                route = [];
+                if (startIndex <= endIndex) {
+                    for (let i = startIndex; i <= endIndex; i++) route.push(ilocosNorteData[i]);
+                } else {
+                    for (let i = startIndex; i >= endIndex; i--) route.push(ilocosNorteData[i]);
+                }
+            }
+        } else {
+            // Fallback to array order if we lack coordinates
+            if (startIndex <= endIndex) {
+                for (let i = startIndex; i <= endIndex; i++) route.push(ilocosNorteData[i]);
+            } else {
+                for (let i = startIndex; i >= endIndex; i--) route.push(ilocosNorteData[i]);
+            }
+        }
+
+        // Format response: list the towns in sequence with top spots and quick notes
+        const textLines: string[] = [];
+        textLines.push(`Here are places you can visit on a route from **${startLoc.name}** to **${endLoc.name}** (in order):`);
+        route.forEach((loc, idx) => {
+            const topSpots = (loc.touristSpots || []).slice(0, 2).map(s => `**${s.name}** — ${s.description}`);
+            const topFood = (loc.food || []).slice(0, 2).map(f => `**${f.name}** — ${f.description}`);
+            textLines.push(`\n**${idx + 1}. ${loc.name}**`);
+            if (topSpots.length > 0) textLines.push(`- Top attractions: ${topSpots.join('; ')}` + (topSpots.length ? '' : ''));
+            if (topFood.length > 0) textLines.push(`- Food to try: ${topFood.join('; ')}`);
+            if (loc.nearbySuggestion) textLines.push(`- Nearby suggestion: ${loc.nearbySuggestion}`);
+        });
+        textLines.push(`\n**Tip:** Ask me to expand any town in the route for a day-by-day itinerary or accommodation suggestions.`);
+        return textLines.join('\n');
     }
 
     // A flag to determine if the query is general (not tied to a specific location keyword).
@@ -1038,6 +1768,12 @@ const App = () => {
     if (isGeneralQuery && /\b(itinerary|plan|day trip|schedule|one day|1 day)\b/.test(lowerInput)) {
         return "Of course! I can help with that. To give you the best plan, could you tell me which city or municipality in Ilocos Norte you'd like an itinerary for? For example, you can ask 'Create a one-day plan for Pagudpud'.";
     }
+    // Ask for mall and it shows two major malls in Ilocos Norte
+    if (/\b(malls|mall|available malls|present malls|malls available)\b/.test(lowerInput)) {
+        return "Here are the main malls you can find in Ilocos Norte:\n\n" +
+            "• [Robinsons Ilocos Norte (San Nicolas)](https://www.google.com/maps/place/Robinsons+Ilocos+Norte) – the largest shopping destination in the province, featuring a wide variety of retail shops, a fully equipped food court, popular cafes, a cinema, and entertainment options suitable for families and tourists.\n\n" +
+            "• [SM City Laoag (San Nicolas)](https://www.google.com/maps/place/SM+City+Laoag) – a modern, well-organized mall offering department stores, branded retail outlets, a spacious dining area, and leisure facilities, perfect for shopping, dining, or relaxing during your visit to Laoag City.\n";
+    }
 
     // 10. Handle general food/dietary/pasalubong queries
     const foodKeywords = /\b(food|eat|dish|cuisine|pastry|snack|kakanin|delicacy|vegetarian|vegan|halal|pasalubong|souvenir|chichacorn|cornick|biscocho|longganisa|coffee)\b/;
@@ -1281,22 +2017,26 @@ const App = () => {
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
+        const userMessage: Message = { author: Author.USER, text: input };
+        setIsLoading(true);
 
-    const userMessage: Message = { author: Author.USER, text: input };
-    setMessages(prev => [...prev, userMessage]);
-    setInput('');
-    setIsLoading(true);
-    
-    // Simulate bot thinking time and generate response
-    setTimeout(() => {
-        const botText = generateBotResponse(input, messages);
-        const botMessage: Message = {
-            author: Author.BOT,
-            text: botText,
-        };
-        setMessages(prev => [...prev, botMessage]);
-        setIsLoading(false);
-    }, 1000);
+        // Add the user's message to state and ensure the bot generates its response
+        // using the updated messages array (including the just-sent user message)
+        setMessages(prev => {
+            const next = [...prev, userMessage];
+            // Simulate bot thinking time and generate response using the updated messages
+            setTimeout(() => {
+                const botText = generateBotResponse(userMessage.text, next);
+                const botMessage: Message = {
+                    author: Author.BOT,
+                    text: botText,
+                };
+                setMessages(prev2 => [...prev2, botMessage]);
+                setIsLoading(false);
+            }, 1000);
+            return next;
+        });
+        setInput('');
   };
 
   if (!isChatVisible) {
